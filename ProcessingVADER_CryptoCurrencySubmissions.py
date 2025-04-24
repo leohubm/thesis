@@ -12,7 +12,7 @@ try:
 except LookupError:
     nltk.download('vader_lexicon')
 
-FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_submissions.csv' # Adjust path if needed
+FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_submissions.csv'
 
 TIMESTAMP_COLUMN = 'created'
 TITLE_COLUMN = 'title'
@@ -20,7 +20,7 @@ BODY_COLUMN = 'text'
 OUTPUT_ORIGINAL_COLS = ['author', 'score', 'link']
 
 # filtering for r/CryptoCurrency
-KEYWORDS = ['bitcoin', 'btc', 'satoshi', 'lightning network', 'ordinals']
+KEYWORDS = ['bitcoin', 'btc']
 
 
 # setup for preprocessing
