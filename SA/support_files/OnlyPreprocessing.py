@@ -201,7 +201,7 @@ if not final_df.empty:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_name = os.path.basename(FILE_PATH)
     dir_name = os.path.dirname(FILE_PATH)
-    if not dir_name: dir_name = '.' # Handle case where file is in the current directory
+    if not dir_name: dir_name = '../..'  # Handle case where file is in the current directory
 
     # Adjust filename to reflect only preprocessing
     output_filename = base_name.replace('.csv', f'_bitcoin_filtered_preprocessed_{timestamp}.csv')
