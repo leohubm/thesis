@@ -8,29 +8,35 @@ import string
 import traceback
 
 #FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_submissions.csv'
-#FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_comments.csv'
-FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_submissions.csv'
+FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_comments.csv'
+#FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_submissions.csv'
 #FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_comments.csv'
 
 TIMESTAMP_COLUMN = 'created'
-# !! remove TITLE_COLUMN for _comments
-TITLE_COLUMN = 'title'
-BODY_COLUMN = 'text'
-#BODY_COLUMN = 'body'
+
+# --only for submissions--
+# TITLE_COLUMN = 'title'
+
+# BODY_COLUMN = 'text'
+BODY_COLUMN = 'body'
 
 OUTPUT_ORIGINAL_COLS = ['author', 'score', 'link']
 
-# Filtering keywords (remains the same) !! only for r/CryptoCurrency
+KEYWORDS = ['bitcoin', 'btc']
+
+# --Advanced Keyword-Filter for comparison--
 #KEYWORDS = ['bitcoin', 'btc']
 
+# --- Preprocessing Setup for FinBERT ---
 url_pattern = re.compile(r'http\S+|www\.\S+')
-punctuation_to_remove = string.punctuation
-
+punctuation_to_remove = string.punctuation # Define punctuation to remove
+# Create translation table for removing punctuation
 translate_table = str.maketrans('', '', punctuation_to_remove)
 
-# !! only for r/CryptoCurrency
-#keyword_pattern = r"\b(?:" + "|".join(map(re.escape, KEYWORDS)) + r")\b" # Use re.escape
+# Pattern for keywords (case-insensitive word boundaries)
+keyword_pattern = r"\b(?:" + "|".join(map(re.escape, KEYWORDS)) + r")\b"
 
+# New patterns for FinBERT preprocessing
 user_mention_pattern = re.compile(r'\/?u\/\w+') # Matches /u/username or u/username
 subreddit_mention_pattern = re.compile(r'\/?r\/\w+') # Matches /r/subreddit or r/subreddit
 # Comprehensive emoji pattern
@@ -74,69 +80,78 @@ def clean_text_for_finbert(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-print(f"Starting preprocessing of '{os.path.basename(FILE_PATH)}' for FinBERT.")
+# --- Main Processing Logic ---
+print(f"Starting preprocessing of '{os.path.basename(FILE_PATH)}' (Comments Data) for FinBERT.") # Clarified title
 
 final_df = pd.DataFrame()
-initial_row_count_read = 0 # To store the count after reading
-df = None # Initialize df
+initial_row_count_read = 0
+df = None
 
 try:
     # Step 1: Read the entire CSV file
     print("Reading CSV file...")
-    # Ensure 'url' column exists in your CSV or remove it from dtype if not needed
-    # If 'url' is not consistently present, remove it from dtype to avoid potential errors
+    # --- MODIFICATION START: Adjusted dtype for comments ---
+    # Define dtypes, ensuring BODY_COLUMN uses the variable and TITLE_COLUMN is removed
+    # Keep 'url' handling logic as before, assuming 'url' might or might not be in comments CSV
+    base_dtype = {BODY_COLUMN: str, 'author': str, 'link': str}
     try:
+        # Try reading with 'url' column
+        read_dtype = base_dtype.copy()
+        read_dtype['url'] = str
         df = pd.read_csv(
             FILE_PATH,
             sep=',',
             encoding='utf-8',
             on_bad_lines='skip',
-            dtype={TITLE_COLUMN: str, BODY_COLUMN: str, 'author': str, 'link': str, 'url': str}, # Check if 'url' column exists
+            dtype=read_dtype, # Use updated dtype map
             low_memory=False
         )
     except ValueError as e:
-        # If 'url' column causes issues (e.g., missing), try without specifying its dtype
+         # If 'url' column causes issues (e.g., missing), try without specifying its dtype
         if 'url' in str(e):
             print("Warning: Issue reading 'url' column. Retrying without specifying its dtype.")
+            read_dtype_no_url = base_dtype.copy() # Reset to base, excluding 'url'
             df = pd.read_csv(
                 FILE_PATH,
                 sep=',',
                 encoding='utf-8',
                 on_bad_lines='skip',
-                dtype={TITLE_COLUMN: str, BODY_COLUMN: str, 'author': str, 'link': str}, # Removed 'url' from dtype
+                dtype=read_dtype_no_url, # Use dtype without 'url'
                 low_memory=False
             )
         else:
-            raise e # Re-raise other ValueErrors
+             # If error is not about 'url', re-raise it
+             raise e
+    # --- MODIFICATION END ---
 
     initial_row_count_read = len(df)
     print(f"Successfully read file. Initial shape: {df.shape}")
 
-    # Step 2: Combine 'title' and 'text' into 'text_to_analyze' and apply FinBERT cleaning
-    print("Cleaning and combining text for FinBERT...")
-    title_col_present = TITLE_COLUMN in df.columns
+    # Step 2: Clean the body text and assign to 'text_to_analyze'
+    print("Cleaning body text for FinBERT...") # Changed print message
+    # --- MODIFICATION START: Simplified for body column only ---
+    # title_col_present = TITLE_COLUMN in df.columns # This would be False now
     body_col_present = BODY_COLUMN in df.columns
 
-    if title_col_present and body_col_present:
-        # Combine title and body, fill NaN with empty string before combining
-        df['text_to_analyze'] = (df[TITLE_COLUMN].fillna('') + ' ' + df[BODY_COLUMN].fillna('')).apply(clean_text_for_finbert)
-    elif title_col_present:
-        print(f"Warning: Missing '{BODY_COLUMN}'. Using only '{TITLE_COLUMN}'.")
-        df['text_to_analyze'] = df[TITLE_COLUMN].fillna('').apply(clean_text_for_finbert)
-    elif body_col_present:
-        print(f"Warning: Missing '{TITLE_COLUMN}'. Using only '{BODY_COLUMN}'.")
+    if body_col_present:
+        # Directly use the BODY_COLUMN for cleaning
+        print(f"Using column '{BODY_COLUMN}' for text analysis.")
         df['text_to_analyze'] = df[BODY_COLUMN].fillna('').apply(clean_text_for_finbert)
     else:
-        print(f"Error: Missing both '{TITLE_COLUMN}' and '{BODY_COLUMN}'. Cannot create 'text_to_analyze'.")
-        df['text_to_analyze'] = '' # Create empty column
+        # Handle case where even the body column is missing
+        print(f"Error: Body column '{BODY_COLUMN}' not found. Cannot create 'text_to_analyze'.")
+        df['text_to_analyze'] = '' # Create empty column to prevent later errors
+    # --- MODIFICATION END ---
 
-    # !! only for r/CryptoCurrency
     # Step 3: Filter for keyword-related content using keywords
-    # print(f"Filtering by keywords: {KEYWORDS}...")
-    # initial_rows_before_keyword_filter = len(df)
-    # if 'text_to_analyze' in df.columns and not df['text_to_analyze'].empty:
-    #     df = df[df['text_to_analyze'].str.contains(keyword_pattern, case=False, na=False, regex=True)]
-    # print(f"Rows after keyword filter: {len(df)} (removed {initial_rows_before_keyword_filter - len(df)})")
+    print(f"Filtering by keywords: {KEYWORDS}...") # Commented out print
+    # print("Skipping keyword filtering (keyword_pattern is commented out).")
+    initial_rows_before_keyword_filter = len(df)
+    if 'text_to_analyze' in df.columns and not df['text_to_analyze'].empty:
+        # Ensure keyword_pattern is defined before using it. Since it's commented out above, this line would fail.
+        df = df[df['text_to_analyze'].str.contains(keyword_pattern, case=False, na=False, regex=True)] # Commented out filtering step
+    print(f"Rows after keyword filter: {len(df)} (removed {initial_rows_before_keyword_filter - len(df)})") # Commented out print
+    # print(f"Rows remaining (no keyword filter applied): {len(df)}") # Added alternative print
 
     # Step 4: Filter out empty, deleted/removed, or too-short content
     print("Filtering by content length and specific markers...")
@@ -149,7 +164,9 @@ try:
 
     # Check if DataFrame is empty after filtering
     if df.empty:
-        print("\n--- No data remaining after applying keyword and content filters. ---")
+        # --- MODIFICATION START: Adjusted message slightly ---
+        print("\n--- No data remaining after applying content/length filters. ---")
+        # --- MODIFICATION END ---
     else:
         # Step 5: Convert timestamp (Keeping existing logic as requested)
         print("Converting timestamps...")
@@ -241,7 +258,10 @@ if not final_df.empty:
         print(f"Error Type: {type(e).__name__}")
         print(f"Error Message: {e}")
 else:
+    # --- MODIFICATION START: Adjusted message slightly ---
     print("\nFinal DataFrame is empty. No output file created.")
-    print("Verify filters, timestamp formats, and potential errors during processing.")
+    print("Verify input data and filters (content/length, timestamp).")
+    # --- MODIFICATION END ---
+
 
 print("\nScript finished.")

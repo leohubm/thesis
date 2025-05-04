@@ -1,5 +1,3 @@
-## check if remove due to double use
-
 import os
 import pandas as pd
 import re
@@ -9,28 +7,34 @@ import traceback
 
 #FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_submissions.csv'
 #FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_comments.csv'
-FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_submissions.csv'
-#FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_comments.csv'
+#FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_submissions.csv'
+FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_comments.csv'
 
 TIMESTAMP_COLUMN = 'created'
-# !! remove TITLE_COLUMN for _comments
+
+# --only for submissions--
 TITLE_COLUMN = 'title'
+
 BODY_COLUMN = 'text'
-#BODY_COLUMN = 'body'
+# BODY_COLUMN = 'body'
 
 OUTPUT_ORIGINAL_COLS = ['author', 'score', 'link']
 
-# Filtering keywords (remains the same) !! only for r/CryptoCurrency
+KEYWORDS = ['bitcoin', 'btc']
+
+# --Advanced Keyword-Filter for comparison--
 #KEYWORDS = ['bitcoin', 'btc']
 
+# --- Preprocessing Setup for FinBERT ---
 url_pattern = re.compile(r'http\S+|www\.\S+')
-punctuation_to_remove = string.punctuation
-
+punctuation_to_remove = string.punctuation # Define punctuation to remove
+# Create translation table for removing punctuation
 translate_table = str.maketrans('', '', punctuation_to_remove)
 
-# !! only for r/CryptoCurrency
-#keyword_pattern = r"\b(?:" + "|".join(map(re.escape, KEYWORDS)) + r")\b" # Use re.escape
+# Pattern for keywords (case-insensitive word boundaries)
+keyword_pattern = r"\b(?:" + "|".join(map(re.escape, KEYWORDS)) + r")\b" # Use re.escape
 
+# New patterns for FinBERT preprocessing
 user_mention_pattern = re.compile(r'\/?u\/\w+') # Matches /u/username or u/username
 subreddit_mention_pattern = re.compile(r'\/?r\/\w+') # Matches /r/subreddit or r/subreddit
 # Comprehensive emoji pattern
@@ -74,11 +78,12 @@ def clean_text_for_finbert(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
+# --- Main Processing Logic ---
 print(f"Starting preprocessing of '{os.path.basename(FILE_PATH)}' for FinBERT.")
 
 final_df = pd.DataFrame()
-initial_row_count_read = 0 # To store the count after reading
-df = None # Initialize df
+initial_row_count_read = 0
+df = None
 
 try:
     # Step 1: Read the entire CSV file
@@ -130,13 +135,12 @@ try:
         print(f"Error: Missing both '{TITLE_COLUMN}' and '{BODY_COLUMN}'. Cannot create 'text_to_analyze'.")
         df['text_to_analyze'] = '' # Create empty column
 
-    # !! only for r/CryptoCurrency
     # Step 3: Filter for keyword-related content using keywords
-    # print(f"Filtering by keywords: {KEYWORDS}...")
-    # initial_rows_before_keyword_filter = len(df)
-    # if 'text_to_analyze' in df.columns and not df['text_to_analyze'].empty:
-    #     df = df[df['text_to_analyze'].str.contains(keyword_pattern, case=False, na=False, regex=True)]
-    # print(f"Rows after keyword filter: {len(df)} (removed {initial_rows_before_keyword_filter - len(df)})")
+    print(f"Filtering by keywords: {KEYWORDS}...")
+    initial_rows_before_keyword_filter = len(df)
+    if 'text_to_analyze' in df.columns and not df['text_to_analyze'].empty:
+        df = df[df['text_to_analyze'].str.contains(keyword_pattern, case=False, na=False, regex=True)]
+    print(f"Rows after keyword filter: {len(df)} (removed {initial_rows_before_keyword_filter - len(df)})")
 
     # Step 4: Filter out empty, deleted/removed, or too-short content
     print("Filtering by content length and specific markers...")
