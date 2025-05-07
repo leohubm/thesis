@@ -48,7 +48,7 @@ if response.status_code == 200:
     data = response.json()
 
     # Save to CSV
-    with open('price_data/bitcoin_2021_2024.csv', 'w', newline='') as f:
+    with open('bitcoin_2021_2024.csv', 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=data[0].keys())
         writer.writeheader()
         writer.writerows(data)

@@ -1,4 +1,4 @@
-## check if remove due to double use
+# file for preprocessing all .csv without applying an SA method
 
 import os
 import pandas as pd

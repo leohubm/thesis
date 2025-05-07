@@ -6,9 +6,7 @@ import string
 import traceback
 
 #FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_submissions.csv'
-#FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\CryptoCurrency_comments.csv'
-#FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_submissions.csv'
-FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_comments.csv'
+FILE_PATH = r'C:\Users\Leo Hubmann\Desktop\BachelorThesis_data\Bitcoin_submissions.csv'
 
 TIMESTAMP_COLUMN = 'created'
 
@@ -225,7 +223,7 @@ if not final_df.empty:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_name = os.path.basename(FILE_PATH)
     dir_name = os.path.dirname(FILE_PATH)
-    if not dir_name: dir_name = '.' # Handle case where file is in the current directory
+    if not dir_name: dir_name = '..'  # Handle case where file is in the current directory
 
     # Adjust filename to reflect FinBERT preprocessing
     output_filename = base_name.replace('.csv', f'_finbert_preprocessed_{timestamp}.csv')

@@ -159,7 +159,7 @@ if not all_daily_data.empty:
     print(f"Date range: {all_daily_data.index.min()} to {all_daily_data.index.max()}")
 
     # Save output
-    output_dir = 'gtrends_data/google_trends_output_daily_single'
+    output_dir = 'google_trends_output_daily_single'
     os.makedirs(output_dir, exist_ok=True)
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")

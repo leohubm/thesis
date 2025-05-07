@@ -183,7 +183,7 @@ if not final_df.empty:
     base_name = os.path.basename(FILE_PATH)
     dir_name = os.path.dirname(FILE_PATH)
     # Handle case where the script is run in the same directory as the file
-    if not dir_name: dir_name = '.'
+    if not dir_name: dir_name = '../..'
 
     # Construct a descriptive output filename
     output_filename = base_name.replace('.csv', f'_filtered_vader_{timestamp}.csv')
