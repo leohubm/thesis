@@ -1,7 +1,9 @@
+## Bachelor Thesis 
+
 # Digital Sentiment Analysis for Quantitative Bitcoin Trading
 **Methods, Implementation, and Performance Evaluation**
 
-## Bachelor Thesis 
+-----
 
 ### Author
 
