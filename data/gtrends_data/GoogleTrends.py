@@ -34,11 +34,6 @@ def get_date_chunks(start_date_str, end_date_str, months_per_chunk=6):
 
     return chunks
 
-
-# --- Configuration ---
-# Initialize TrendReq - Use the corrected version without retry args
-# Adding ssl_verify=False and requests_args might help with certain connection issues
-# especially on specific network configurations or Python versions
 try:
     pytrends = TrendReq(hl='en-US', tz=360)
     # Optional: Add workaround for potential SSL issues if needed

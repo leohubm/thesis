@@ -1,6 +1,7 @@
 # This script converts all .zst files in a specified input folder to .csv files in an output folder.
 # It processes only data between July 1, 2015, and October 31, 2021.
 # The resulting files may be quite large and might not be suitable for opening in standard CSV readers like Excel.
+# credit, adjusted script Marco Hafid
 
 import zstandard
 import os
