@@ -9,7 +9,7 @@
 
 **Leo Hubmann**  
 BSc Wirtschaftsinformatik | BSc Business Informatics  
-*Major: Data Science*  
+*Major: Business Analytics*  
 📧 leo.hubmann@students.fhnw.ch  
 📧 leohubm@gmail.com  
 
