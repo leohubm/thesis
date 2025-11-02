@@ -2,7 +2,7 @@
 
 # Digital Sentiment Analysis for Quantitative Bitcoin Trading
 **Methods, Implementation, and Performance Evaluation**
-
+https://studierendenprojekte.wirtschaft.fhnw.ch/view/4275
 -----
 
 ### Author
